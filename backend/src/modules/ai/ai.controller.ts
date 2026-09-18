@@ -17,7 +17,7 @@ import { ChatRequestDto } from './dto/chat-request.dto';
 import { NotFoundCustomException } from '../../common/exceptions/not-found.exception';
 
 @ApiTags('projects-ai')
-@Controller('api/v1/projects')
+@Controller('api/v1/projects-ai')
 export class AiController {
   private readonly logger = new Logger(AiController.name);
 
@@ -26,12 +26,6 @@ export class AiController {
     private readonly prisma: PrismaService,
   ) {}
 
-  /**
-   * Streams AI chat responses using Server-Sent Events (SSE).
-   *
-   * @param projectId ID of the project
-   * @param dto Chat request containing user prompt
-   */
   @Sse(':projectId/chat')
   @ApiOperation({ summary: 'Stream AI design advice via SSE' })
   public async chatStream(
@@ -43,7 +37,7 @@ export class AiController {
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
-          take: 20, // Sliding window: last 20 messages for context
+          take: 20,
         },
       },
     });
@@ -54,7 +48,6 @@ export class AiController {
       );
     }
 
-    // 1. Save incoming user message to Database
     await this.prisma.message.create({
       data: {
         projectId,
@@ -63,20 +56,17 @@ export class AiController {
       },
     });
 
-    // 2. Prepare history for AI service
     const history = project.messages.map((m) => ({
       role: m.role,
       content: m.content,
     }));
 
-    // 3. Obtain AsyncGenerator stream from AiService
     const generator = this.aiService.streamChatResponse(
       { title: project.title, description: project.description },
       history,
       dto.message,
     );
 
-    // 4. Convert AsyncGenerator into RxJS Observable for NestJS Fastify SSE
     return new Observable<MessageEvent>((observer) => {
       let accumulatedResponse = '';
 
@@ -87,7 +77,6 @@ export class AiController {
             observer.next({ data: { chunk: token } });
           }
 
-          // Save complete ASSISTANT message to DB once stream finishes
           if (accumulatedResponse.trim().length > 0) {
             await this.prisma.message.create({
               data: {
@@ -108,9 +97,6 @@ export class AiController {
     });
   }
 
-  /**
-   * Summarizes key design decisions made during the project conversation.
-   */
   @Post(':projectId/summarize')
   @ApiOperation({ summary: 'Summarize key CMF design decisions' })
   public async summarizeDecisions(@Param('projectId') projectId: string) {
