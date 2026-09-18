@@ -65,7 +65,7 @@ export class AiController {
 
     // 2. Prepare history for AI service
     const history = project.messages.map((m) => ({
-      role: m.role as 'USER' | 'ASSISTANT' | 'SYSTEM',
+      role: m.role,
       content: m.content,
     }));
 
@@ -130,7 +130,7 @@ export class AiController {
     }
 
     const history = project.messages.map((m) => ({
-      role: m.role as 'USER' | 'ASSISTANT' | 'SYSTEM',
+      role: m.role,
       content: m.content,
     }));
 
