@@ -2,21 +2,23 @@ import {
   Controller,
   Post,
   Delete,
-  Body,
   Param,
   Sse,
   Logger,
   MessageEvent,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { Role } from 'generated/prisma/enums';
 import { AiService } from './ai.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ChatRequestDto } from './dto/chat-request.dto';
 import { NotFoundCustomException } from '../../common/exceptions/not-found.exception';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('projects-ai')
+@UseGuards(JwtAuthGuard)
 @Controller('api/v1/projects-ai')
 export class AiController {
   private readonly logger = new Logger(AiController.name);
@@ -30,7 +32,7 @@ export class AiController {
   @ApiOperation({ summary: 'Stream AI design advice via SSE' })
   public async chatStream(
     @Param('projectId') projectId: string,
-    @Body() dto: ChatRequestDto,
+    @Query('message') message: string,
   ): Promise<Observable<MessageEvent>> {
     const project = await this.prisma.project.findUnique({
       where: { id: projectId },
@@ -52,7 +54,7 @@ export class AiController {
       data: {
         projectId,
         role: Role.USER,
-        content: dto.message,
+        content: message,
       },
     });
 
@@ -64,7 +66,7 @@ export class AiController {
     const generator = this.aiService.streamChatResponse(
       { title: project.title, description: project.description },
       history,
-      dto.message,
+      message,
     );
 
     return new Observable<MessageEvent>((observer) => {

@@ -50,7 +50,7 @@ export class AiService {
 
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-3.5-flash-lite',
       });
 
       // Construct System Prompt incorporating project design context
@@ -112,7 +112,7 @@ export class AiService {
 
     try {
       const model = this.genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
+        model: 'gemini-3.5-flash-lite',
       });
 
       const conversationText = history
