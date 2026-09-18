@@ -22,6 +22,7 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "generated/*": ["./generated/*"]
-    }
+    },
+    "types": ["jest", "node"]
   }
 }
