@@ -20,15 +20,11 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Starting database seeding...');
 
-  // 1. Cleanup existing seed data
-  await prisma.message.deleteMany();
-  await prisma.project.deleteMany();
-  await prisma.user.deleteMany({ where: { email: 'test@lmesh.eu' } });
-
-  // 2. Create seed user
   const hashedPassword = await bcrypt.hash('password', 10);
-  const user = await prisma.user.create({
-    data: {
+  const user = await prisma.user.upsert({
+    where: { email: 'test@lmesh.eu' },
+    update: { password: hashedPassword, name: 'Senior Lead Designer' },
+    create: {
       email: 'test@lmesh.eu',
       password: hashedPassword,
       name: 'Senior Lead Designer',
@@ -37,9 +33,16 @@ async function main() {
 
   console.log(`Seed user created: ${user.email} (Password: password)`);
 
-  // 3. Create initial sample automotive design projects
-  const project1 = await prisma.project.create({
-    data: {
+  const project1 = await prisma.project.upsert({
+    where: { id: 'seed-terra-luxury-suv-interior' },
+    update: {
+      title: 'Terra Luxury SUV Interior',
+      description:
+        'Warm earth tones, matte Nappa leather, open-pore walnut wood, and brushed copper metal accents for a flagship electric SUV interior.',
+    },
+
+    create: {
+      id: 'seed-terra-luxury-suv-interior',
       userId: user.id,
       title: 'Terra Luxury SUV Interior',
       description:
@@ -61,8 +64,15 @@ async function main() {
     },
   });
 
-  const project2 = await prisma.project.create({
-    data: {
+  const project2 = await prisma.project.upsert({
+    where: { id: 'seed-cybergt-aerodynamic-exterior' },
+    update: {
+      title: 'CyberGT Aerodynamic Exterior',
+      description:
+        'Satin liquid silver paint, exposed satin carbon fibre weave, and anodised electric blue trim highlights for a track-focused GT concept.',
+    },
+    create: {
+      id: 'seed-cybergt-aerodynamic-exterior',
       userId: user.id,
       title: 'CyberGT Aerodynamic Exterior',
       description:
